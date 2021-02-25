@@ -65,9 +65,6 @@ export PATH="$HOME/.jenv/bin:$PATH"
 export NVM_DIR=~/.nvm
 source $(brew --prefix nvm)/nvm.sh
 
-export LUNA_NEXUS_TOKEN=NpmToken.90e7c10d-25ab-3e8a-b54c-893d22b916f2
-export NEXUS_TOKEN=NpmToken.90e7c10d-25ab-3e8a-b54c-893d22b916f2
-
 export GOPATH=$HOME
 export ANDROID_SDK=/Users/chris.grice/Library/Android/sdk
 export AWS_SDK_LOAD_CONFIG=1
