@@ -1,99 +1,93 @@
-# If you come from bash you might have to change your $PATH.
-# export PATH=$HOME/bin:/usr/local/bin:$PATH
+# Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
+# Initialization code that may require console input (password prompts, [y/n]
+# confirmations, etc.) must go above this block; everything else may go below.
+if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
+  source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
+fi
 
-# Path to your oh-my-zsh installation.
-export ZSH=$HOME/.oh-my-zsh
 
-# Set name of the theme to load --- if set to "random", it will
-# load a random theme each time oh-my-zsh is loaded, in which case,
-# to know which specific one was loaded, run: echo $RANDOM_THEME
-# See https://github.com/robbyrussell/oh-my-zsh/wiki/Themes
-ZSH_THEME="agnoster"
+# Setup a cache for autocomplete
+autoload -Uz compinit
+typeset -i updated_at=$(date +'%j' -r ~/.zcompdump 2>/dev/null || stat -f '%Sm' -t '%j' ~/.zcompdump 2>/dev/null)
+if [ $(date +'%j') != $updated_at ]; then
+  compinit -i
+else
+  compinit -C -i
+fi
 
-# Set list of themes to pick from when loading at random
-# Setting this variable when ZSH_THEME=random will cause zsh to load
-# a theme from this variable instead of looking in ~/.oh-my-zsh/themes/
-# If set to an empty array, this variable will have no effect.
-# ZSH_THEME_RANDOM_CANDIDATES=( "robbyrussell" "agnoster" )
+# Make autocomplete menus work
+zmodload -i zsh/complist
 
-# Uncomment the following line to use case-sensitive completion.
-# CASE_SENSITIVE="true"
+HISTFILE=$HOME/.zsh_history
+HISTSIZE=100000
+SAVEHIST=$HISTSIZE
 
-# Uncomment the following line to use hyphen-insensitive completion.
-# Case-sensitive completion must be off. _ and - will be interchangeable.
-# HYPHEN_INSENSITIVE="true"
+COMPLETION_WAITING_DOTS="true"
+DISABLE_UNTRACKED_FILES_DIRTY="true"
 
-# Uncomment the following line to disable bi-weekly auto-update checks.
-# DISABLE_AUTO_UPDATE="true"
+setopt hist_ignore_all_dups # remove older duplicate entries from history
+setopt hist_reduce_blanks # remove superfluous blanks from history items
+setopt inc_append_history # save history entries as soon as they are entered
+setopt share_history # share history between different instances of the shell
+setopt correct_all # autocorrect commands
+setopt auto_list # automatically list choices on ambiguous completion
+setopt auto_menu # automatically use menu completion
+setopt always_to_end # move cursor to end if word had one match
 
-# Uncomment the following line to change how often to auto-update (in days).
-# export UPDATE_ZSH_DAYS=13
+zstyle ':completion:*' menu select # select completions with arrow keys
+zstyle ':completion:*' group-name '' # group results by category
+zstyle ':completion:::::' completer _expand _complete _ignored _approximate # enable approximate matches for completion
 
-# Uncomment the following line to disable colors in ls.
-# DISABLE_LS_COLORS="true"
+# Load antibody plugin manager
+source <(antibody init)
 
-# Uncomment the following line to disable auto-setting terminal title.
-# DISABLE_AUTO_TITLE="true"
+# Plugins
+antibody bundle zdharma/fast-syntax-highlighting
+antibody bundle zsh-users/zsh-autosuggestions
 
-# Uncomment the following line to enable command auto-correction.
-# ENABLE_CORRECTION="true"
+antibody bundle romkatv/powerlevel10k
 
-# Uncomment the following line to display red dots whilst waiting for completion.
-# COMPLETION_WAITING_DOTS="true"
+if [[ "$TERM_PROGRAM" == "iTerm.app" ]]; then
+  iterm2_print_user_vars() {
+    iterm2_set_user_var cpuTemp $(osx-cpu-temp)
+    iterm2_set_user_var awsProfile "☁ $AWS_PROFILE"
+    iterm2_set_user_var kubeContext "⎈ $(kubectx -c)"
+  }
+  test -e "${HOME}/.iterm2_shell_integration.zsh" && source "${HOME}/.iterm2_shell_integration.zsh"
+fi
 
-# Uncomment the following line if you want to disable marking untracked files
-# under VCS as dirty. This makes repository status check for large repositories
-# much, much faster.
-# DISABLE_UNTRACKED_FILES_DIRTY="true"
+export PATH=$HOME/bin:/usr/local/bin:$PATH
+export PATH="/usr/local/opt/ruby/bin:$PATH"
+export PATH="/usr/local/opt/qt/bin:$PATH"
+export PATH=$ANDROID_SDK/platform-tools:$PATH
+export PATH="$HOME/.jenv/bin:$PATH"
 
-# Uncomment the following line if you want to change the command execution time
-# stamp shown in the history command output.
-# You can set one of the optional three formats:
-# "mm/dd/yyyy"|"dd.mm.yyyy"|"yyyy-mm-dd"
-# or set a custom format using the strftime function format specifications,
-# see 'man strftime' for details.
-# HIST_STAMPS="mm/dd/yyyy"
+export NVM_DIR=~/.nvm
+source $(brew --prefix nvm)/nvm.sh
 
-# Would you like to use another custom folder than $ZSH/custom?
-# ZSH_CUSTOM=/path/to/new-custom-folder
+export LUNA_NEXUS_TOKEN=NpmToken.90e7c10d-25ab-3e8a-b54c-893d22b916f2
+export NEXUS_TOKEN=NpmToken.90e7c10d-25ab-3e8a-b54c-893d22b916f2
 
-# Which plugins would you like to load?
-# Standard plugins can be found in ~/.oh-my-zsh/plugins/*
-# Custom plugins may be added to ~/.oh-my-zsh/custom/plugins/
-# Example format: plugins=(rails git textmate ruby lighthouse)
-# Add wisely, as too many plugins slow down shell startup.
-plugins=(
-  git
-  docker
-)
+export GOPATH=$HOME
+export ANDROID_SDK=/Users/chris.grice/Library/Android/sdk
+export AWS_SDK_LOAD_CONFIG=1
 
-source $ZSH/oh-my-zsh.sh
+# Useful functions
+finduser() {
+  userinfo=$(dscl localhost read /Search/Users/$1)
+  echo "Email:\t\t$(echo $userinfo | grep -a userPrincipalName | sed s/dsAttrTypeNative:userPrincipalName:\ //g)"
+  echo "Employee ID:\t$(echo $userinfo | grep -a employeeNumber | sed s/dsAttrTypeNative:employeeNumber:\ //g)"
+  echo "Grade:\t\t$(echo $userinfo | grep -a extensionAttribute2 | sed s/dsAttrTypeNative:extensionAttribute2:\ //g)"
+  echo "Start Date:\t$(echo $userinfo | grep -a extensionAttribute10 | sed s/dsAttrTypeNative:extensionAttribute10:\ //g)"
+  echo "Mac Admin:\t$((echo $userinfo | grep -aq RESMACADMIN01G) && echo yes || echo no)"
+  echo "VPN:\t\t$((echo $userinfo | grep -aq ADMRDPCONNECT01_F5_NORMAL) && echo yes || echo no)"
+  echo "Blackfriars:\t$((echo $userinfo | grep -aq RESDEVWIRELESSUSER01G) && echo yes || echo no)"
+}
 
-# User configuration
+eval "$(jenv init -)"
+eval "$(direnv hook zsh)"
 
-# export MANPATH="/usr/local/man:$MANPATH"
+# To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
+[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
-# You may need to manually set your language environment
-# export LANG=en_US.UTF-8
-
-# Preferred editor for local and remote sessions
-# if [[ -n $SSH_CONNECTION ]]; then
-#   export EDITOR='vim'
-# else
-#   export EDITOR='mvim'
-# fi
-
-# Compilation flags
-# export ARCHFLAGS="-arch x86_64"
-
-# ssh
-# export SSH_KEY_PATH="~/.ssh/rsa_id"
-
-# Set personal aliases, overriding those provided by oh-my-zsh libs,
-# plugins, and themes. Aliases can be placed here, though oh-my-zsh
-# users are encouraged to define aliases within the ZSH_CUSTOM folder.
-# For a full list of active aliases, run `alias`.
-#
-# Example aliases
-# alias zshconfig="mate ~/.zshrc"
-# alias ohmyzsh="mate ~/.oh-my-zsh"
+alias dps="docker ps"
